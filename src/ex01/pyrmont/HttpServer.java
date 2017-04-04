@@ -69,7 +69,7 @@ public class HttpServer {
 				response.sendStaticResource();
 				
 				socket.close();
-				//πÿ±’√¸¡Ó
+				
 				shutdown=request.getUri().equals(SHUTDOWN_COMMAND);
 			}catch(Exception e){
 				e.printStackTrace();
