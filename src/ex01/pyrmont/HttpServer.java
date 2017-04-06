@@ -19,8 +19,7 @@ import java.net.Socket;
 
 /**
  * ClassName:HttpServer <br/>
- * Function: TODO ADD FUNCTION. <br/>
- * Reason:	 TODO ADD REASON. <br/>
+ * Function: 接收来自浏览器的http请求. <br/>
  * Date:     2017年4月2日 上午9:27:10 <br/>
  * @author   Administrator
  * @version  
@@ -29,8 +28,10 @@ import java.net.Socket;
  */
 public class HttpServer {
 	
-	public static final String WEB_ROOT=System.getProperty("user.dir")+File.separator+"webroot";
+	public static final String WEB_ROOT=System.getProperty("user.dir")
+			+File.separator+"webroot";
 	
+	//关闭指令
 	private static final String SHUTDOWN_COMMAND="/SHUTDOWN";
 	
 	private boolean shutdown=false;
@@ -40,6 +41,9 @@ public class HttpServer {
 		server.await();
 	}
 	
+	/**
+	 * Await()接收来自客户端的http请求，并
+	 */
 	public void await(){
 		ServerSocket serverSocket=null;
 		int port=8080;
@@ -50,7 +54,8 @@ public class HttpServer {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		System.out.println("start");
+		
+		//循环等待请求的到来
 		while(!shutdown){
 			Socket socket=null;
 			InputStream input=null;
@@ -61,15 +66,31 @@ public class HttpServer {
 				input=socket.getInputStream();
 				output=socket.getOutputStream();
 				
+				//创建Request对象，并解析
 				Request request=new Request(input);
 				request.parse();
 				
+				//创建Response对象
 				Response response=new Response(output);
 				response.setRequest(request);
-				response.sendStaticResource();
 				
+				/*//发送静态请求资源(第一章)
+				response.sendStaticResource();*/
+				
+				/*
+				 * check if this is a request for a servlet or a static resource
+				 * a servlet for a request begin with "/servlet/"
+				 */
+				if(request.getUri().startsWith("/servlet/")){
+					ServletProcessor processor=new ServletProcessor();
+					processor.process(request,response);
+				}else{
+					StaticResourceProcessor processor=new StaticResourceProcessor();
+					processor.process(request,response);
+				}
+			
 				socket.close();
-				
+				//check if the previous URI is a shutdown command
 				shutdown=request.getUri().equals(SHUTDOWN_COMMAND);
 			}catch(Exception e){
 				e.printStackTrace();
